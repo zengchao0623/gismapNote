@@ -1,0 +1,13 @@
+{
+"type": "FeatureCollection",
+"name": "LZ",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "id": 1, "Name": "林场1", "x": 112.0209662239902, "y": 24.623569604516721 }, "geometry": { "type": "Point", "coordinates": [ 111.970054236717914, 24.474083344015099 ] } },
+{ "type": "Feature", "properties": { "id": 2, "Name": "林场2", "x": 112.07522938646737, "y": 24.605875095013296 }, "geometry": { "type": "Point", "coordinates": [ 112.108268016505761, 24.462888237142177 ] } },
+{ "type": "Feature", "properties": { "id": 3, "Name": "林场3", "x": 112.04219963539431, "y": 24.549252664602339 }, "geometry": { "type": "Point", "coordinates": [ 112.017285258644051, 24.527587989167323 ] } },
+{ "type": "Feature", "properties": { "id": 4, "Name": "石公山保护区", "x": 112.05045707316258, "y": 24.469037554853479 }, "geometry": { "type": "Point", "coordinates": [ 112.050457073162576, 24.469037554853479 ] } },
+{ "type": "Feature", "properties": { "id": 5, "Name": "林场5", "x": 112.09528316390458, "y": 24.40769658857494 }, "geometry": { "type": "Point", "coordinates": [ 112.031913988257159, 24.421237010721825 ] } },
+{ "type": "Feature", "properties": { "id": 6, "Name": "林场6", "x": 112.07051085059979, "y": 24.544534128734757 }, "geometry": { "type": "Point", "coordinates": [ 112.10138301309469, 24.534785024788999 ] } }
+]
+}

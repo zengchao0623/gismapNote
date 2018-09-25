@@ -1,0 +1,36 @@
+{
+	"name": "gismap",
+	"version": "0.1.0",
+	"private": true,
+	"author": "Scott",
+	"main": "dist/index.html",
+	"scripts": {
+		"serve": "vue-cli-service serve",
+		"build": "vue-cli-service build",
+		"lint": "vue-cli-service lint"
+	},
+	"dependencies": {
+		"openlayers": "^4.6.5",
+		"vue": "^2.5.17",
+		"vue-router": "^3.0.1"
+	},
+	"devDependencies": {
+		"@vue/cli-plugin-babel": "^3.0.0",
+		"@vue/cli-service": "^3.0.0",
+		"vue-template-compiler": "^2.5.17"
+	},
+	"postcss": {
+		"plugins": {
+			"autoprefixer": {}
+		}
+	},
+	"engines": {
+		"node": ">= 6.0.0",
+		"npm": ">= 3.0.0"
+	},
+	"browserslist": [
+		"> 1%",
+		"last 2 versions",
+		"not ie <= 10"
+	]
+}
