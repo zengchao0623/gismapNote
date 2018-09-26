@@ -15,9 +15,12 @@ html,body{
 }
 
 .custom-control{
-	right: 0.5em;
+	position: absolute;
+	top: .5em;
+	right: .5em;
 	cursor: pointer;
 }
 .custom-control button{
 	cursor: inherit;
+	padding: 6px 8px;
 }
