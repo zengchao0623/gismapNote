@@ -12,12 +12,39 @@
 			vertical
 			:min="1"
 			:max="18"
-			:step="1"
+			:step="0.1"
 			show-step
 			@change="mapZoomChange"
 			class="zoomControl"
 			height="180px">
 		</el-slider>
+		<div class="custom-control">
+			<el-tooltip effect="dark" content="返回中心点" placement="left">
+				<el-button type="primary" icon="el-icon-search" @click="backToCenterControl"></el-button>
+			</el-tooltip>
+			<el-tooltip effect="dark" content="地图绘制" placement="left">
+				<el-dropdown @command="editMapControl" trigger="click">
+					<el-button type="primary" icon="el-icon-edit"></el-button>
+  					<el-dropdown-menu slot="dropdown">
+    					<el-dropdown-item command="Point">点</el-dropdown-item>
+    					<el-dropdown-item command="LineString">线</el-dropdown-item>
+    					<el-dropdown-item command="Polygon">面</el-dropdown-item>
+    					<el-dropdown-item command="Circle">圆</el-dropdown-item>
+					</el-dropdown-menu>
+				</el-dropdown>
+			</el-tooltip>
+			<el-tooltip effect="dark" content="切换底图" placement="left">
+				<el-dropdown @command="changeTileServer" trigger="click">
+					<el-button type="primary" icon="el-icon-picture"></el-button>
+  					<el-dropdown-menu slot="dropdown">
+    					<el-dropdown-item command="ArcGIS">默认</el-dropdown-item>
+    					<el-dropdown-item command="OSM">OSM</el-dropdown-item>
+    					<el-dropdown-item command="Bing">Bing</el-dropdown-item>
+    					<el-dropdown-item command="Google">Google</el-dropdown-item>
+					</el-dropdown-menu>
+				</el-dropdown>
+			</el-tooltip>
+		</div>
 	</div>
 </template>
 
@@ -35,6 +62,11 @@ export default {
 			center: [12473897.880706105,2811920.244959629], // 中心点
 			mapZoom: 11,
 			popupOverlay: null,
+			canMaker: false,
+			makerSource:null,
+			drawInteraction:null,
+			snapInteraction:null,
+			mapTileLayer:null,
 			popupData: {
 				isShow: false,
 				name: "",
@@ -140,7 +172,7 @@ export default {
 		buildOlMap() {
 			const _this = this;
 			
-			const TileLayer = new ol.layer.Tile({
+			const TileLayer = _this.mapTileLayer = new ol.layer.Tile({
 				preload: 4,
 				source: new ol.source.XYZ({
 					url : _this.tileSourceUrl
@@ -166,7 +198,7 @@ export default {
 				})
 			}
 
-			const VectorLayer = new ol.layer.Vector({
+			const VectorLayer = _this.VectorLayer = new ol.layer.Vector({
 				source: vectorSource,
 				style: vectorStyle
 			})
@@ -185,60 +217,46 @@ export default {
 				view: mapView,
 
 			});
-			_this.olMap
 			_this.createControl();
+			_this.createMakerVector();
 			_this.createOverlay();
 			_this.bindMapEvent();
 		},
 		// 返回中心点控件
 		backToCenterControl(ele) {
-			const _this = this;
-			const icon = document.createElement("i");
-			icon.className = "el-icon-search";
-			const button = document.createElement("button");
-			button.setAttribute("type","button");
-			button.className = "el-button el-button--default el-button--mini";
-			button.title = "返回图层中心";
-			button.appendChild(icon);
-
-			ele.appendChild(button);
-
-			button.addEventListener("click",function(){
-				_this.olMap.getView().animate({
-					zoom: 11,
-					center : _this.center,
-					duration: 1000
-				})
+			const _this = this
+			_this.olMap.getView().animate({
+				zoom: 11,
+				center : _this.center,
+				duration: 1000
 			})
 		},
-		// 绘图控件
-		editMapControl(ele) {
+		// 地图标注控件
+		editMapControl(drawType) {
 			const _this = this;
-			const icon = document.createElement("i");
-			icon.className = "el-icon-edit-outline";
-			const button = document.createElement("button");
-			button.setAttribute("type","button");
-			button.className = "el-button el-button--primary el-button--mini";
-			button.title = "绘制图层";
-			button.appendChild(icon);
+			_this.canMaker = !_this.canMaker;
 
-			ele.appendChild(button);
-			button.addEventListener("click",function(){
-
-			})
+			_this.drawInteraction = new ol.interaction.Draw({
+          		source: _this.makerSource,
+          		type: drawType
+        	});
+			_this.olMap.addInteraction(_this.drawInteraction);
+			
+            _this.snapInteraction = new ol.interaction.Snap({
+				source: _this.makerSource
+			});
+			_this.olMap.addInteraction(_this.snapInteraction);
+		},
+		// 缩放控件
+		mapZoomChange(zoom) {
+			this.olMap.getView().setZoom(zoom);
 		},
 		// 创建控件
 		createControl() {
 			const _this = this;
-			const element = document.createElement("div");
-			element.className = "custom-control";
-			_this.backToCenterControl(element);
-
 			const Control = new ol.control.Control({
-				element : element
+				//element : element
 			});
-			//_this.olMap.addControl(Control)
-			//_this.backToCenterControl();
 		},
 		// 添加tips弹窗-Overlay
 		createOverlay() {
@@ -247,16 +265,67 @@ export default {
 			});
 			this.olMap.addOverlay(this.popupOverlay);
 		},
-		// 缩放控件
-		mapZoomChange(zoom) {
-			this.olMap.getView().setZoom(zoom);
+
+		// 底图切换控件
+		changeTileServer(cmd) {
+			const _this = this;
+			let source = new ol.source.XYZ({
+					url : _this.tileSourceUrl
+				});
+			switch (cmd) {
+				case "OSM":
+					source = new ol.source.OSM();
+					break;
+				case "Bing":
+					source = new ol.source.BingMaps({
+						key: "As1HiMj1PvLPlqc_gtM7AqZfBL8ZL3VrjaS3zIb22Uvb9WKhuJObROC-qUpa81U5",
+						imagerySet: "AerialWithLabels"
+					});
+					break;
+				case "Google":
+					source = new ol.source.XYZ({
+						//url : "http://mt3.google.cn/vt/lyrs=s&hl=zh-CN&gl=cn&x={x}&y={y}&z={z}" // 卫星图
+						//url : "http://mt0.google.cn/vt/lyrs=t&hl=zh-CN&gl=cn&x={x}&y={y}&z={z}" // 地形图
+						url: "http://mt2.google.cn/vt/lyrs=m&hl=zh-CN&gl=cn&x={x}&y={y}&z={z}" //全地图
+					});
+					break;
+			}
+			_this.mapTileLayer.setSource(source);
+		},
+		// 创建标注所需图层
+		createMakerVector() {
+			const _this = this;
+			_this.makerSource = new ol.source.Vector();
+			const makerVector = this.makerVector = new ol.layer.Vector({
+				source: _this.makerSource,
+				style: new ol.style.Style({
+					fill: new ol.style.Fill({
+						color: "rgba(64, 158, 255, 0.2)"
+					}),
+					stroke: new ol.style.Stroke({
+						color: "#6bb4ff",
+						width: 2
+					}),
+					image: new ol.style.Circle({
+						radius: 7,
+						fill: new ol.style.Fill({
+							color: "#409eff"
+						})
+					})
+				})
+			});
+
+			_this.olMap.addLayer(makerVector);
+			const modify = new ol.interaction.Modify({source: _this.makerSource});
+      		_this.olMap.addInteraction(modify);
 		},
 		// 事件绑定
 		bindMapEvent() {
 			const _this = this;
-
+			
 			const selectClick = new ol.interaction.Select({
 				condition: ol.events.condition.click,
+				layers:[_this.VectorLayer],
 				style: function(feature){
 					return new ol.style.Style({
 						image: new ol.style.Icon({
@@ -274,6 +343,7 @@ export default {
 			});
 			selectClick.on("select",function(evt){
 				const selectData = evt.selected;
+				
 				if(selectData.length > 0){
 					_this.popupOverlay.setPosition(evt.mapBrowserEvent.coordinate);
 					_this.popupData.isShow = true;
@@ -286,24 +356,25 @@ export default {
 			})
 			_this.olMap.addInteraction(selectClick);
 
-
-			/* _this.olMap.on("singleclick",function(evt){
-				const feature = _this.olMap.getFeaturesAtPixel(evt.pixel);
-				if(feature){
-					_this.popupOverlay.setPosition(evt.coordinate);
-					_this.popupData.isShow = true;
-					_this.popupData.name = feature[0].get("Name");
-					_this.popupData.hdms = ol.coordinate.toStringHDMS(ol.proj.transform(evt.coordinate, 'EPSG:3857', 'EPSG:4326'));
-					_this.popupData.type = feature[0].getGeometry().getType()
-				}else{
-					_this.popupData.isShow = false;
+			// 绑定键盘事件
+			document.addEventListener("keyup",function(evt){
+				if(evt.keyCode == 27){ // esc键关闭地图绘制功能
+					_this.canMaker = false;
+					_this.olMap.removeInteraction(_this.drawInteraction);
+					_this.olMap.removeInteraction(_this.snapInteraction);
 				}
-			}) */
+				console.log(evt);
+			})
+
+			// 监听地图像素大小变化，同步更新地图Zoom控件
+			_this.olMap.getView().addEventListener("change:resolution",function(evt){
+				_this.mapZoom = evt.target.getZoom();
+			})
 		}
 	}
 }
 </script>
-<style scoped>
+<style>
 	.openlayer{
 		width: 100%;
 		height: 100%;
@@ -323,11 +394,32 @@ export default {
 	#popup-content.hidden{
 		display: none;
 	}
-
+	.custom-control{
+		position: absolute;
+		top: 200px;
+		right: 10px;
+		cursor: pointer;
+		z-index: 3000;
+	}
+	.custom-control button{
+		display: block;
+		cursor: inherit;
+		padding: 6px 8px;
+	}
 	.el-slider.is-vertical.zoomControl{
 		position: absolute;
 		right:10px;
-		top: 20px;
+		top: 10px;
+	}
+	.el-slider.is-vertical.zoomControl .el-slider__runway{
+		margin: 0 12px;
+	}
+	.openlayer .el-tooltip{
+		margin-top: 10px;
+		display: block;
+	}
+	.openlayer .el-button+.el-button{
+		margin: 0;
 	}
 </style>
 

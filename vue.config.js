@@ -5,9 +5,14 @@ const path = require('path')
 const debug = process.env.NODE_ENV !== 'production'
 module.exports = {
     baseUrl: '',
+    lintOnSave: false,
     devServer: {
         port: 9000
     },
+    css: {
+        modules: false
+    },
+    filenameHashing: false,
     productionSourceMap: false,
     configureWebpack: {
         output: {
