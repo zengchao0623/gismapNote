@@ -414,7 +414,7 @@ export default {
 	.el-slider.is-vertical.zoomControl .el-slider__runway{
 		margin: 0 12px;
 	}
-	.openlayer .el-tooltip{
+	.openlayer .custom-control .el-tooltip{
 		margin-top: 10px;
 		display: block;
 	}
